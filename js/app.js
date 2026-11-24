@@ -17,6 +17,29 @@
   }
 
   // ---- Acervo: filtros e busca ----
+  // Data de acesso nas citações (formato ABNT: 24 nov. 2026)
+  const meses = ['jan.', 'fev.', 'mar.', 'abr.', 'maio', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+  const hoje = new Date();
+  document.querySelectorAll('[data-hoje]').forEach((el) => { el.textContent = `${hoje.getDate()} ${meses[hoje.getMonth()]} ${hoje.getFullYear()}`; });
+  document.querySelectorAll('[data-copiar]').forEach((b) => b.addEventListener('click', async () => {
+    const alvo = document.querySelector(b.dataset.copiar);
+    try { await navigator.clipboard.writeText(alvo.innerText.trim()); b.textContent = 'Citação copiada'; }
+    catch (e) { const r = document.createRange(); r.selectNodeContents(alvo); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b.textContent = 'Selecionada: use Ctrl+C'; }
+    setTimeout(() => { b.textContent = 'Copiar citação'; }, 2500);
+  }));
+
+  // Glossário: filtro
+  const filtro = document.querySelector('#filtro');
+  if (filtro) {
+    const linhas = [...document.querySelectorAll('[data-busca]')];
+    const letras = [...document.querySelectorAll('.letra')];
+    filtro.addEventListener('input', () => {
+      const t = semAcento(filtro.value).trim();
+      linhas.forEach((li) => { li.hidden = t && !li.dataset.busca.includes(t); });
+      letras.forEach((L) => { L.hidden = ![...L.querySelectorAll('li')].some((li) => !li.hidden); });
+    });
+  }
+
   // Publicações: filtro por tipo
   const pubs = [...document.querySelectorAll('.pub')];
   if (pubs.length) {
@@ -53,7 +76,11 @@
       chips.forEach((o) => o.setAttribute('aria-pressed', o === ch));
       aplicar();
     }));
-    if (campo) campo.addEventListener('input', aplicar);
+    if (campo) {
+      campo.addEventListener('input', aplicar);
+      const q = new URLSearchParams(location.search).get('q');
+      if (q) { campo.value = q; aplicar(); }
+    }
   }
 
   // ---- Lâmina: troca de imagem, siglas e zoom ----
